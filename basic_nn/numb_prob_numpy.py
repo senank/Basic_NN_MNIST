@@ -14,11 +14,11 @@ def get_accuracy(pred, Y):
 
 # Init of paramaters for NN
 def init_params():
-    w1 = np.random.rand(10, 784) - 0.5 # goes from 784 nodes to 10 nodes
-    w2 = np.random.rand(10, 10) - 0.5 # goes from 10 nodes to 10 nodes
-    b1 = np.random.rand(10, 1) - 0.5 
+    w1 = np.random.rand(20, 784) - 0.5 # goes from 784 nodes to 10 nodes
+    w2 = np.random.rand(10, 20) - 0.5 # goes from 10 nodes to 10 nodes
+    b1 = np.random.rand(20, 1) - 0.5 
     b2 = np.random.rand(10, 1) - 0.5
-    iterations = 1000
+    iterations = 10000
     return w1, w2, b1, b2, iterations
 
 # Activation function and derivative hard-coded 
@@ -28,15 +28,28 @@ def ReLU(Z1):
 def ReLU_deriv(Z1):
     return Z1 > 0
 
+# Dropout function
+def dropout(X, dropout_rate):
+    # Create a mask to determine which neurons are "dropped out"
+    keep_p = 1 - dropout_rate
+    mask = np.random.binomial(1, keep_p, size=X.shape) / keep_p
+    return X * mask
+
 # Forcing values to be between 0-1
 def softmax(Z):
-    return np.exp(Z)/ sum(np.exp(Z)) # ? Why does using np.sum here cause error forever?
+    shiftZ = Z - np.max(Z, axis=0, keepdims=True)  # shift values for numerical stability
+    exps = np.exp(shiftZ)
+    return exps/ sum(exps) # ? Why does using np.sum here cause error forever?
 
 # Forward_prop, i.e. input->predictions
 def forward_prop(w1, w2, b1, b2, X):
     Z1 = w1.dot(X) + b1
     A1 = ReLU(Z1)
-    Z2 = w2.dot(A1) + b2
+
+    dropout_rate = 0.2
+    A1_dropout = dropout(A1, dropout_rate)
+
+    Z2 = w2.dot(A1_dropout) + b2
     A2 = softmax(Z2)
     return Z1, A1, Z2, A2
 
@@ -59,7 +72,7 @@ def back_prop(Z1, A1, Z2, A2, w2, Y, X):
     dw1 = 1/m * dZ1.dot(X.T)
     db1 = 1/m * sum(dZ1) # ? But I can use sum/np.sum here
     return dw1, db1, dw2, db2
-    
+
 
 # Adjusting the parameters after calculating gradients
 def adjust_params(w1, w2, b1, b2, dw1, dw2, db1, db2, alpha):
@@ -123,7 +136,7 @@ if __name__ == "__main__":
         m, n = data.shape # m = # of rows, n = number of columns
                         # Rows in this case is an example of a number
                         # Columns are the pixel value 0-255 that collectively represent the image
-        
+
         # Randomizing data
         np.random.shuffle(data)
 
