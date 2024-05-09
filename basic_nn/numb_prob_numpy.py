@@ -115,7 +115,7 @@ def gradient_descent(X, Y, alpha):
 
 ### FOR TESTING PURPOSES ###
 def make_pred(X, w1, b1, w2, b2):
-    A2 = forward_prop(w1, w2, b1, b2, X)
+    A2 = forward_prop_test(w1, w2, b1, b2, X)
     return get_predication(A2)
 
 
@@ -130,6 +130,8 @@ def test_pred(index, w1, b1, w2, b2, X, Y):
     plt.imshow(cur_image, interpolation='nearest')
     plt.show
 
+
+# Extract data
 def extract_dev_data(data):
     data_dev = data[0:1000].T # Transpose it so examples are now each column
     Y_dev = data_dev[0] # First row of the new transposed matrix is the Y values
