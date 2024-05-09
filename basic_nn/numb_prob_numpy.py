@@ -130,6 +130,21 @@ def test_pred(index, w1, b1, w2, b2, X, Y):
     plt.imshow(cur_image, interpolation='nearest')
     plt.show
 
+def extract_dev_data(data):
+    data_dev = data[0:1000].T # Transpose it so examples are now each column
+    Y_dev = data_dev[0] # First row of the new transposed matrix is the Y values
+    X_dev = data_dev[1:n] # Everything after will contain the pixels 
+    X_dev = X_dev/255 # Making all the pixel values between 0-1
+
+    return X_dev, Y_dev
+
+def extract_train_data(data):
+    data_train = data[1000:m].T
+    Y_train = data_train[0]
+    X_train = data_train[1:n]
+    X_train = X_train/255
+
+    return X_train, Y_train
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
@@ -149,16 +164,11 @@ if __name__ == "__main__":
         np.random.shuffle(data)
 
         # Extracting cross-validation (dev) set from data
-        data_dev = data[0:1000].T # Transpose it so examples are now each column
-        Y_dev = data_dev[0] # First row of the new transposed matrix is the Y values
-        X_dev = data_dev[1:n] # Everything after will contain the pixels 
-        X_dev = X_dev/255 # Making all the pixel values between 0-1
+        X_dev, Y_dev = extract_dev_data(data)
+        
 
         # Extracting training data from overall data
-        data_train = data[1000:m].T
-        Y_train = data_train[0]
-        X_train = data_train[1:n]
-        X_train = X_train/255
+        X_train, Y_train = extract_train_data(data)
         # print("", Y_train)
         # Iteratively updates the w1, w2, b1, b2 params with gradient descent
         w1, w2, b1, b2 = gradient_descent(X_train, Y_train, alpha)
