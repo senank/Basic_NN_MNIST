@@ -168,10 +168,10 @@ if __name__ == "__main__":
         # Extracting cross-validation (dev) set from data
         X_dev, Y_dev = extract_dev_data(data)
         
-
         # Extracting training data from overall data
         X_train, Y_train = extract_train_data(data)
         # print("", Y_train)
+        
         # Iteratively updates the w1, w2, b1, b2 params with gradient descent
         w1, w2, b1, b2 = gradient_descent(X_train, Y_train, alpha)
         # print("Error extracting/tokenizing data, check file")
