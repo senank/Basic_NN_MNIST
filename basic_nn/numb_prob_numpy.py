@@ -42,7 +42,7 @@ def softmax(Z):
     return exps/ sum(exps) # ? Why does using np.sum here cause error forever?
 
 # Forward_prop, i.e. input->predictions
-def forward_prop(w1, w2, b1, b2, X):
+def forward_prop_train(w1, w2, b1, b2, X):
     Z1 = w1.dot(X) + b1
     A1 = ReLU(Z1)
 
@@ -50,6 +50,14 @@ def forward_prop(w1, w2, b1, b2, X):
     A1_dropout = dropout(A1, dropout_rate)
 
     Z2 = w2.dot(A1_dropout) + b2
+    A2 = softmax(Z2)
+    return Z1, A1, Z2, A2
+
+# Need testing version as dropout reduces capacity of the network, we want full capacity during testing
+def forward_prop_test(w1, w2, b1, b2, X):
+    Z1 = w1.dot(X) + b1
+    A1 = ReLU(Z1)
+    Z2 = w2.dot(A1) + b2
     A2 = softmax(Z2)
     return Z1, A1, Z2, A2
 
@@ -94,7 +102,7 @@ def gradient_descent(X, Y, alpha):
     '''
     w1, w2, b1, b2, iterations = init_params()
     for i in range(iterations):
-        Z1, A1, Z2, A2 = forward_prop(w1, w2, b1, b2, X)
+        Z1, A1, Z2, A2 = forward_prop_train(w1, w2, b1, b2, X)
         dw1, db1, dw2, db2 = back_prop(Z1, A1, Z2, A2, w2, Y, X)
         w1, b1, w2, b2 = adjust_params(w1, w2, b1, b2, dw1, dw2, db1, db2, alpha)
         if (i % 10 == 0):
