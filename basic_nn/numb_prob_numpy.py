@@ -28,12 +28,27 @@ def ReLU(Z1):
 def ReLU_deriv(Z1):
     return Z1 > 0
 
+def batch_norm(Z, gamma, beta):
+    # batch norm form
+    eps = 1e-5
+    mean = np.mean(Z, axis=0)
+    var = np.var(Z, axis=0)
+    Z_norm = (Z - mean) / np.sqrt(var + eps)
+    
+    out = gamma * Z_norm + beta
+    active_out = max(0, out)
+
+    #Storing variables for back prop
+    cache = (Z_norm, mean, var, eps)
+
+    return active_out, cache
+
 # Dropout function
-def dropout(X, dropout_rate):
+def dropout(A, dropout_rate):
     # Create a mask to determine which neurons are "dropped out"
     keep_p = 1 - dropout_rate
-    mask = np.random.binomial(1, keep_p, size=X.shape) / keep_p
-    return X * mask
+    mask = np.random.binomial(1, keep_p, size=A.shape) / keep_p
+    return A * mask
 
 # Forcing values to be between 0-1
 def softmax(Z):
@@ -42,8 +57,13 @@ def softmax(Z):
     return exps/ sum(exps) # ? Why does using np.sum here cause error forever?
 
 # Forward_prop, i.e. input->predictions
-def forward_prop_train(w1, w2, b1, b2, X):
-    Z1 = w1.dot(X) + b1
+def forward_prop_train(w1, w2, b1, b2, X, gamma, beta):
+    Z1 = w1.dot(X) + b1 # Note can remove + b1 for batch normalization since it was naturally disappear
+    
+    a_out, cache = batch_norm(Z1, gamma, beta)
+    Z_norm, mean, var, eps = cache
+    final_cache = (Z_norm, mean, var, gamma, beta, eps)
+
     A1 = ReLU(Z1)
 
     dropout_rate = 0.2
@@ -51,7 +71,7 @@ def forward_prop_train(w1, w2, b1, b2, X):
 
     Z2 = w2.dot(A1_dropout) + b2
     A2 = softmax(Z2)
-    return Z1, A1, Z2, A2
+    return Z1, A1, Z2, A2, final_cache
 
 # Need testing version as dropout reduces capacity of the network, we want full capacity during testing
 def forward_prop_test(w1, w2, b1, b2, X):
@@ -70,7 +90,8 @@ def Y_actual(Y):
     return arr
 
 # Finding gradients of weights and biases for adjustments
-def back_prop(Z1, A1, Z2, A2, w2, Y, X):
+def back_prop(Z1, A1, Z2, A2, w2, Y, X, cache):
+    Z_norm, mean, var, gamma, beta, eps = cache
     m = Y.size
     y_actual = Y_actual(Y)
     dZ2 = A2 - y_actual
@@ -91,7 +112,7 @@ def adjust_params(w1, w2, b1, b2, dw1, dw2, db1, db2, alpha):
     return w1, b1, w2, b2
 
 # Iteratively updating the paramaters in relation to the cost function
-def gradient_descent(X, Y, alpha):
+def gradient_descent(X, Y, alpha, gamma, beta):
     '''
     Parameters:
         X:
@@ -102,8 +123,8 @@ def gradient_descent(X, Y, alpha):
     '''
     w1, w2, b1, b2, iterations = init_params()
     for i in range(iterations):
-        Z1, A1, Z2, A2 = forward_prop_train(w1, w2, b1, b2, X)
-        dw1, db1, dw2, db2 = back_prop(Z1, A1, Z2, A2, w2, Y, X)
+        Z1, A1, Z2, A2, cache = forward_prop_train(w1, w2, b1, b2, X, gamma, beta)
+        dw1, db1, dw2, db2 = back_prop(Z1, A1, Z2, A2, w2, Y, X, cache)
         w1, b1, w2, b2 = adjust_params(w1, w2, b1, b2, dw1, dw2, db1, db2, alpha)
         if (i % 10 == 0):
             print("Iteration: {}".format(i))
@@ -172,8 +193,13 @@ if __name__ == "__main__":
         X_train, Y_train = extract_train_data(data)
         # print("", Y_train)
         
+
+        # init gamma and beta for batch norm
+        gamma = 1
+        beta = 0
+
         # Iteratively updates the w1, w2, b1, b2 params with gradient descent
-        w1, w2, b1, b2 = gradient_descent(X_train, Y_train, alpha)
+        w1, w2, b1, b2 = gradient_descent(X_train, Y_train, alpha, gamma, beta)
         # print("Error extracting/tokenizing data, check file")
         # sys.exit
 
